@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part Swap Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        h1 { color: #333; }
+        h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 25px; }
+        h3 { border-bottom: 1px solid #ddd; padding-bottom: 3px; margin-top: 15px; }
+        
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.9em; }
+        th { background-color: #555; color: white; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* Status Colors */
+        .status-pending_dispatch { color: #f39c12; font-weight: bold; } /* Orange */
+        .status-pending_receipt { color: #008CBA; font-weight: bold; } /* Blue */
+        .status-completed { color: #4CAF50; font-weight: bold; } /* Green for completed */
+        
+        /* Header and Buttons */
+        .app-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #ccc; 
+            padding-bottom: 10px; 
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+        }
+        .button { 
+            background-color: #4CAF50; 
+            color: white; 
+            padding: 10px 15px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            transition: background-color 0.3s; 
+            font-weight: bold;
+            display: inline-block;
+        }
+        .button:hover { background-color: #45a049; }
+        .secondary-button { 
+            background-color: #aaa; 
+            color: white; 
+            padding: 8px 12px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            transition: background-color 0.3s; 
+            font-size: 0.9em; 
+            margin-left: 10px; 
+            display: inline-block;
+        }
+        .secondary-button:hover { background-color: #999; }
+        .action-button { 
+            color: white; 
+            padding: 6px 12px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-size: 0.9em; 
+            display: inline-block; 
+            min-width: 120px;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+        .action-button:hover { opacity: 0.8; }
+
+        /* Navigation */
+        .nav-links { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .nav-links a { margin-right: 15px; text-decoration: none; color: #555; padding: 5px 0; }
+        .nav-links a.active { color: #008CBA; font-weight: bold; border-bottom: 2px solid #008CBA; }
+        .nav-links a:hover { color: #008CBA; }
+
+        /* Metrics */
+        .metric-card { 
+            background-color: white; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            border-radius: 5px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            text-align: center;
+        }
+        .metric-value { font-size: 2em; font-weight: bold; margin-top: 5px; }
+        .metric-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin-top: 15px;
+        }
+        
+        /* Stock Summary */
+        .stock-summary-container { 
+            margin-top: 30px; 
+            padding: 20px; 
+            background-color: #eef; 
+            border-radius: 8px; 
+            border: 1px solid #dde;
+        }
+        .stock-item { 
+            background-color: white; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            border-radius: 4px; 
+            text-align: center; 
+            font-size: 0.8em;
+        }
+        .stock-sku { font-weight: bold; color: #333; margin-bottom: 3px; }
+        .stock-count { font-size: 1.5em; font-weight: bold; color: #1a75ff; }
+        .grid-3-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+
+        /* Form/Input Styling */
+        form { background-color: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="number"], select, textarea, input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #008CBA;
+            outline: none;
+            box-shadow: 0 0 0 1px #008CBA;
+        }
+        .message-box {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 1em;
+            /* Added margin-bottom to separate from content */
+            margin-bottom: 20px; 
+        }
+        .success-box {
+            background-color: #e6ffe6; 
+            border-left: 5px solid #4CAF50;
+            color: #006600;
+            font-weight: bold; /* Added bold for visibility */
+        }
+        .error-box {
+            background-color: #ffe6e6; 
+            border-left: 5px solid #cc0000;
+            color: #cc0000;
+            font-weight: bold; /* Added bold for visibility */
+        }
+        
+        /* Footer Styling */
+        footer {
+            margin-top: 30px; 
+            padding: 15px 0;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 0.85em;
+            color: #777;
+        }
+        
+        /* Footer Link Styling - Modified to fit new footer structure */
+        .footer-content {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             width: 100%;
+             margin-top: 5px;
+        }
+        .footer-link a {
+            color: #008CBA;
+            text-decoration: none;
+        }
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 1400px; margin: 0 auto;">
+        
+        <div class="app-header">
+            <h1>🛠️ Stock Swap Tracker</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('log_request') }}" class="button">➕ Log New Request</a>
+                <a href="{{ url_for('inventory_management') }}" class="secondary-button">Inventory Log</a>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Dashboard</a>
+            <a href="{{ url_for('completed_swaps') }}" class="{% if request.endpoint == 'completed_swaps' %}active{% endif %}">Completed Swaps</a>
+        </div>
+        
+        {# START OF NEW CODE: FLASH MESSAGES BLOCK #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message-box {% if category == 'error' %}error-box{% else %}success-box{% endif %}">
+                        {{ message|safe }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {# END OF NEW CODE: FLASH MESSAGES BLOCK #}
+
+        <div style="padding-top: 20px;">
+            {% block content %}{% endblock %}
+        </div>
+        
+    </div>
+
+    <footer>
+        <div style="max-width: 1400px; margin: 0 auto;">
+            <p></p>
+            <div class="footer-content">
+                <p>&copy; Send your feedback to Geordany ☻</p>
+                <div class="footer-link">
+                    <a href="{{ url_for('export_data') }}">Export All Data</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

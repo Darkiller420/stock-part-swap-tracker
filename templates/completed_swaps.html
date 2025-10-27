@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 style="margin-top: 10px;">Completed Swaps (Total: {{ completed_count }})</h2>
+    
+    <p style="text-align: right; margin-bottom: 20px; font-style: italic;">
+        Average Time to Completion (Dispatch to Receipt): **{{ avg_days_to_complete }} days**
+    </p>
+
+    {% if swaps %}
+    <table>
+        <thead>
+            <tr>
+                <th>{{ column_map['request_id'] }}</th>
+                <th>{{ column_map['udt_ticket_wo'] }}</th>
+                <th>Date Requested</th>
+                <th>{{ column_map['part_abbreviation'] }}</th>
+                <th>{{ column_map['serial_num'] }}</th>
+                <th>{{ column_map['oem_claim_num'] }}</th>
+                <th>Dispatched SKU</th>
+                <th>Flagged DOA</th>
+                <th>Date Dispatched</th>
+                <th>Received SKU</th>
+                <th>Date Replenished</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for swap in swaps %}
+            <tr>
+                <td>{{ swap.request_id[:8] }}...</td>
+                <td>{{ swap.udt_ticket_wo }}</td>
+                
+                {# Date Requested FIX #}
+                <td>
+                    {% if swap.date_requested and swap.date_requested is not string %}
+                        {{ swap.date_requested.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        {{ swap.date_requested or '-' }}
+                    {% endif %}
+                </td>
+                
+                <td>{{ swap.part_abbreviation }}</td>
+                <td>{{ swap.serial_num or '-' }}</td>
+                <td>{{ swap.oem_claim_num or '-' }}</td>
+                <td>{{ swap.stock_part_used_sku }}</td>
+                
+                {# Flagged DOA #}
+                <td style="text-align: center; color: {% if swap.dispatch_doa and 'Yes' in swap.dispatch_doa %}red; font-weight: bold;{% else %}green;{% endif %}">
+                    {{ swap.dispatch_doa or 'No' }}
+                </td>
+                
+                {# Date Dispatched FIX #}
+                <td>
+                    {% if swap.date_dispatched and swap.date_dispatched is not string %}
+                        {{ swap.date_dispatched.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        {{ swap.date_dispatched or '-' }}
+                    {% endif %}
+                </td>
+                
+                <td>{{ swap.received_part_sku or '-' }}</td>
+                
+                {# Date Replenished FIX #}
+                <td>
+                    {% if swap.date_replenished and swap.date_replenished is not string %}
+                        {{ swap.date_replenished.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        {{ swap.date_replenished or '-' }}
+                    {% endif %}
+                </td>
+                
+                <td style="white-space: nowrap;">
+                    {% if swap.received_doa != 'Yes - Post Install' %}
+                        <a href="{{ url_for('reopen_for_claim', request_id=swap.request_id, reason='DOA_RECEIVED_FAILURE') }}" 
+                           class="action-button" style="background-color: #AA0000; min-width: 100px; margin-right: 5px;"
+                           onclick="return confirm('Are you sure you want to flag the received part for this swap as DOA (Post-Install Failure)? This will reopen the swap for a new dispatch.');">
+                           Flag Received DOA
+                        </a>
+                    {% endif %}
+
+                    <a href="{{ url_for('reopen_for_claim', request_id=swap.request_id) }}" 
+                       class="action-button" style="background-color: #CC0000; min-width: 80px;"
+                       onclick="return confirm('Are you sure you want to fully clear this swap data and reopen it for a claim/dispatch?');">Reopen</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="message-box success-box">
+        No completed swaps found. Time to get swapping!
+    </p>
+    {% endif %}
+{% endblock %}

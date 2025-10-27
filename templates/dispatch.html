@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+    
+    {# CONDITIONAL TITLE #}
+    <h2 style="margin-top: 10px;">
+        {% if action == 'edit' %}
+            Edit Dispatched Part for Stock Swap
+        {% else %}
+            Log Dispatch for Stock Swap
+        {% endif %}
+    </h2>
+
+    <div style="background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; border-bottom: none; padding-bottom: 0;">Request Details ({{ swap_record.request_id[:8] }}...)</h3>
+        <p style="margin: 5px 0;"><strong>{{ column_map['udt_ticket_wo'] }}:</strong> {{ swap_record.udt_ticket_wo }}</p>
+        <p style="margin: 5px 0;"><strong>{{ column_map['part_abbreviation'] }}:</strong> {{ swap_record.part_abbreviation }}</p>
+        <p style="margin: 5px 0;"><strong>Original Serial:</strong> {{ swap_record.serial_num }}</p>
+    </div>
+
+    <form method="POST">
+        <div style="margin-bottom: 10px;">
+            <label for="stock_part_used_sku">{{ column_map['stock_part_used_sku'] }} (Full sku Dispatched)</label>
+            <input type="text" id="stock_part_used_sku" name="stock_part_used_sku" required value="{{ swap_record.stock_part_used_sku or '' }}">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label for="inven_adjust">{{ column_map['inven_adjust'] }} (Dispatch Notes)</label>
+            <textarea id="inven_adjust" name="inven_adjust" rows="2">{{ swap_record.inven_adjust or '' }}</textarea>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="stock_bin">{{ column_map['stock_bin'] }} (Bin Location)</label>
+            <input type="text" id="stock_bin" name="stock_bin" required value="{{ swap_record.stock_bin or '' }}">
+        </div>
+        
+        <p style="color: #CC0000; font-weight: bold; margin-bottom: 20px;">
+            {% if action == 'edit' %}
+                **Updating** this dispatch will reverse the original stock log entry and log a new one. The request remains **PENDING RECEIPT**.
+            {% else %}
+                **Confirming** this dispatch marks the part as removed from stock and sets the request to **PENDING RECEIPT**.
+            {% endif %}
+        </p>
+
+        <div style="display: flex; align-items: center;">
+            
+            {# SUBMIT BUTTON: Conditional text and color #}
+            <button type="submit" class="action-button" style="background-color: {% if action == 'edit' %}#663399{% else %}#f39c12{% endif %}; min-width: 150px;">
+                {% if action == 'edit' %}
+                    Update Dispatch
+                {% else %}
+                    Confirm Dispatch
+                {% endif %}
+            </button>
+            
+            {# CANCEL REQUEST BUTTON (Only for PENDING_RECEIPT / Edit Mode) #}
+            {% if action == 'edit' %}
+                <a href="{{ url_for('cancel_request', request_id=swap_record.request_id) }}" 
+                   class="action-button" 
+                   style="background-color: #CC0000; margin-left: 10px; min-width: 150px;"
+                   onclick="return confirm('WARNING: Are you sure you want to CANCEL this PENDING RECEIPT request? This action will revert the dispatched part back into usable stock and delete the request permanently.');">
+                    Cancel Request
+                </a>
+            {% endif %} 
+            
+        </div>
+    </form>
+{% endblock %}

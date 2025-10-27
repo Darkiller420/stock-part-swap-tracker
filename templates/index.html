@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+    
+    <div class="metric-grid">
+        <div class="metric-card">
+            <p style="font-size: 0.9em; color: #555;">PENDING DISPATCH</p>
+            <p class="metric-value status-pending_dispatch">{{ pending_dispatch_count }}</p>
+        </div>
+        <div class="metric-card">
+            <p style="font-size: 0.9em; color: #555;">PENDING RECEIPT</p>
+            <p class="metric-value status-pending_receipt">{{ pending_receipt_count }}</p>
+        </div>
+        <div class="metric-card">
+            <p style="font-size: 0.9em; color: #555;">TOTAL COMPLETED SWAPS</p>
+            <p class="metric-value status-completed">{{ completed_count }}</p>
+        </div>
+        <div class="metric-card">
+            <p style="font-size: 0.9em; color: #555;">VIEW COMPLETED</p>
+            <a href="{{ url_for('completed_swaps') }}" class="action-button" style="background-color: #777; margin-top: 10px; min-width: 100px;">View History</a>
+        </div>
+    </div>
+
+    <div class="stock-summary-container">
+        <h3>Part Stock Available for Dispatch</h3>
+        <div class="grid-3-col">
+            {% for part, count in part_stock_summary.items() %}
+                {% set parts = part.split(' - ') %}
+                {% set part_sku = parts[0] if parts|length > 0 else part %}
+                {% set stock_type = parts[1] if parts|length > 1 else 'N/A' %}
+                <div class="stock-item">
+                    <div class="stock-sku">{{ part_sku }}</div>
+                    <div style="font-size: 0.7em; color: #888; margin-bottom: 5px;">{{ stock_type }} Stock</div>
+                    <div class="stock-count" style="color: {% if count < 5 %}#cc0000{% else %}#1a75ff{% endif %};">{{ count }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        {% if not part_stock_summary %}
+            <p style="text-align: center; color: #777; margin-top: 10px;">No available stock to display.</p>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin-top: 0; border-bottom: none;">
+            Active Swap Requests 
+            {% if current_filter == 'ALL' %}(Showing All Active){% elif current_filter == 'PENDING_DISPATCH' %}(Pending Dispatch Only){% else %}(Pending Receipt Only){% endif %}
+            (Total: {{ swaps|length }})
+        </h2>
+        <div class="filter-controls" style="display: flex; gap: 10px;">
+            <a href="{{ url_for('index', filter='all') }}" 
+                class="action-button" 
+                style="background-color: {% if current_filter == 'ALL' %}#555{% else %}#aaa{% endif %}; border: none;">
+                Show All Active ({{ pending_count }})
+            </a>
+            <a href="{{ url_for('index', filter='pending_dispatch') }}" 
+                class="action-button" 
+                style="background-color: {% if current_filter == 'PENDING_DISPATCH' %}#f39c12{% else %}#f7b76e{% endif %}; border: none;">
+                Only Dispatch ({{ pending_dispatch_count }})
+            </a>
+            <a href="{{ url_for('index', filter='pending_receipt') }}" 
+                class="action-button" 
+                style="background-color: {% if current_filter == 'PENDING_RECEIPT' %}#008CBA{% else %}#58b4da{% endif %}; border: none;">
+                Only Receipt ({{ pending_receipt_count }})
+            </a>
+        </div>
+    </div>
+    
+    {% if swaps %}
+    <table>
+        <thead>
+            <tr>
+                <th>{{ column_map['request_id'] }}</th>
+                <th>{{ column_map['status'] }}</th>
+                <th>{{ column_map['udt_ticket_wo'] }}</th>
+                <th>{{ column_map['part_abbreviation'] }}</th>
+                <th>{{ column_map['serial_num'] }}</th>
+                <th>{{ column_map['oem_claim_num'] }}</th>
+                <th>{{ column_map['stock_part_used_sku'] }}</th>
+                <th>{{ column_map['stock_bin'] }}</th>
+                <th>{{ column_map['date_requested'] }}</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for swap in swaps %}
+            <tr class="{% if swap.dispatch_doa == 'Yes' %}doa-flagged{% endif %}"> 
+                <td>{{ swap.request_id[:8] }}...</td>
+                <td class="status-{{ swap.status | lower | replace(' ', '_') }}">
+                    {{ swap.status | replace('_', ' ') }}
+                </td>
+                <td>{{ swap.udt_ticket_wo }}</td>
+                <td>{{ swap.part_abbreviation }}</td>
+                <td>{{ swap.serial_num or '-' }}</td>
+                <td>{{ swap.oem_claim_num or '-' }}</td>
+                <td>{{ swap.stock_part_used_sku or '-' }}</td>
+                <td>{{ swap.stock_bin or '-' }}</td>
+                
+                {# FIX APPLIED HERE for date_requested #}
+                <td style="white-space: nowrap;">
+                    {% if swap.date_requested and swap.date_requested is not string %}
+                        {{ swap.date_requested.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        {{ swap.date_requested or '-' }}
+                    {% endif %}
+                </td>
+                
+                <td style="white-space: nowrap;">
+{% if swap.status == 'PENDING_DISPATCH' %}
+
+    {# Button to log the actual dispatch #}
+    <a href="{{ url_for('log_dispatch', request_id=swap.request_id) }}" 
+        class="action-button" style="background-color: #f39c12;">
+        Dispatch Part
+    </a>
+    
+    {# Button to edit the original request details #}
+    <a href="{{ url_for('edit_request', request_id=swap.request_id) }}" 
+        class="action-button" style="background-color: #663399;">
+        Edit
+    </a>
+                        
+                    {% elif swap.status == 'PENDING_RECEIPT' %}
+                        <a href="{{ url_for('log_receive', request_id=swap.request_id) }}" 
+                            class="action-button" style="background-color: #008CBA; margin-bottom: 5px;">
+                            Receive Part
+                        </a>
+                        
+                        <a href="{{ url_for('edit_dispatch', request_id=swap.request_id) }}" 
+                            class="action-button" style="background-color: #663399; margin-bottom: 5px;">
+                            Edit
+                        </a>
+                        
+                        {# DOA FLAG BUTTONS #}
+                        {% if swap.dispatch_doa == 'Yes' %}
+                            <a href="{{ url_for('unflag_doa', request_id=swap.request_id) }}" 
+                                class="action-button" style="background-color: #6c757d; min-width: 120px;">
+                                Un-Flag DOA
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('flag_doa', request_id=swap.request_id) }}" 
+                                class="action-button" style="background-color: #AA0000; min-width: 120px;">
+                                Flag as DOA
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="message-box success-box">
+        {% if current_filter == 'ALL' %}
+            🥳 **All caught up!** No outstanding requests or parts pending replacement, your awesome.
+        {% elif current_filter == 'PENDING_DISPATCH' %}
+            No swaps are currently **Pending Dispatch**.
+        {% else %}
+            No swaps are currently **Pending Receipt**.
+        {% endif %}  
+    </p>
+    {% endif %}  
+{% endblock %}

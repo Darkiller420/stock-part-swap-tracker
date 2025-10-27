@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 style="margin-top: 10px;">Log Receipt for Stock Swap</h2>
+
+    <div style="background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; border-bottom: none; padding-bottom: 0;">Request Details ({{ entry.request_id[:8] }}...)</h3>
+        <p style="margin: 5px 0;"><strong>{{ column_map['udt_ticket_wo'] }}:</strong> {{ entry.udt_ticket_wo }}</p>
+        <p style="margin: 5px 0;"><strong>Part Used:</strong> {{ entry.part_abbreviation }} (SN: {{ entry.serial_num }})</p>
+        <p style="margin: 5px 0;"><strong>Dispatched sku:</strong> {{ entry.stock_part_used_sku }}</p>
+    </div>
+
+    <form method="POST">
+<label for="received_part_sku">Received Part SKU:</label>
+<input type="text" id="received_part_sku" name="received_part_sku" value="{{ entry.received_part_pn or '' }}" required>
+
+        <div style="margin-bottom: 10px;">
+            <label for="received_ppid">{{ column_map['received_ppid'] }} (Received PPID/Serial)</label>
+            <input type="text" id="received_ppid" name="received_ppid" required value="{{ entry.received_ppid or '' }}">
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="received_qty">{{ column_map['received_qty'] }}</label>
+            <input type="number" id="received_qty" name="received_qty" required min="1" value="{{ entry.received_qty or 1 }}">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label for="received_bin">{{ column_map['received_bin'] }} (Restock Location)</label>
+            <input type="text" id="received_bin" name="received_bin" required value="{{ entry.received_bin or '' }}">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="received_doa">{{ column_map['received_doa'] }}</label>
+            <select id="received_doa" name="received_doa" required>
+                <option value="No" {% if entry.received_doa == 'No' %}selected{% endif %}>No (Part is good, ADD to stock)</option>
+                <option value="Yes" {% if entry.received_doa == 'Yes' %}selected{% endif %}>Yes (Part is DOA, DO NOT add to stock)</option>
+            </select>
+        </div>
+        
+        <p style="color: #008CBA; font-weight: bold; margin-bottom: 20px;">**Confirming receipt sets the status to **COMPLETED** and updates inventory based on the DOA selection.**</p>
+
+        <div>
+            <button type="submit" class="action-button" style="background-color: #008CBA;">Confirm Receipt & Complete</button>
+        </div>
+    </form>
+{% endblock %}

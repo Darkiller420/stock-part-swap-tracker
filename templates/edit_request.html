@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+    
+    <h2>Edit Part Request ({{ swap_record.request_id[:8] }}...)</h2>
+
+    {# Request details header is typically included on action pages like dispatch and receive #}
+    <div style="background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; border-bottom: none; padding-bottom: 0;">Current Request Details</h3>
+        <p style="margin: 5px 0;"><strong>{{ column_map['date_requested'] }}:</strong> {{ swap_record.date_requested.strftime('%Y-%m-%d %H:%M') if swap_record.date_requested and swap_record.date_requested is not string else 'N/A' }}</p>
+        <p style="margin: 5px 0;"><strong>Status:</strong> <span class="status-{{ swap_record.status | lower }}">{{ swap_record.status }}</span></p>
+    </div>
+
+    <form method="POST">
+        
+        {# Form fields using the common structure from other files #}
+        <div style="margin-bottom: 10px;">
+            <label for="udt_ticket_wo">{{ column_map['udt_ticket_wo'] }} (WO/Ticket Number)</label>
+            <input type="text" id="udt_ticket_wo" name="udt_ticket_wo" required value="{{ swap_record.udt_ticket_wo or '' }}">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label for="part_abbreviation">{{ column_map['part_abbreviation'] }} (Part Requested)</label>
+            <input type="text" id="part_abbreviation" name="part_abbreviation" required value="{{ swap_record.part_abbreviation or '' }}">
+        </div>
+        
+        {# CRITICAL FIX: Serial Number input added #}
+        <div style="margin-bottom: 10px;">
+            <label for="serial_num">{{ column_map['serial_num'] }} (Original Serial Number)</label>
+            <input type="text" id="serial_num" name="serial_num" required value="{{ swap_record.serial_num or '' }}">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="oem_claim_num">{{ column_map['oem_claim_num'] }} (OEM Claim Number)</label>
+            <input type="text" id="oem_claim_num" name="oem_claim_num" value="{{ swap_record.oem_claim_num or '' }}">
+        </div>
+        
+        <p style="color: #CC0000; font-weight: bold; margin-bottom: 20px;">
+            **Confirming** these changes updates the request details. The request remains **PENDING DISPATCH**.
+        </p>
+
+        {# Button group using the inline style from the dispatch file #}
+        <div style="display: flex; align-items: center; gap: 10px;">
+            
+            {# SUBMIT BUTTON #}
+            <button type="submit" class="action-button" style="background-color: #663399; min-width: 150px;">
+                Save Changes
+            </button>
+            
+            {# CANCEL REQUEST BUTTON #}
+            <a href="{{ url_for('cancel_request', request_id=swap_record.request_id) }}" 
+                class="action-button" 
+                style="background-color: #CC0000; min-width: 150px;"
+                onclick="return confirm('WARNING: Are you sure you want to CANCEL and DELETE this request? This action cannot be undone.');">
+                Cancel Request
+            </a>
+        </div>
+    </form>
+{% endblock %}

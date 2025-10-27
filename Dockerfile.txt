@@ -1,0 +1,24 @@
+# ---- Base Image ----
+# Start with a lightweight, official Python 3.10 image
+FROM python:3.10-slim
+
+# ---- Setup ----
+# Set the "working directory" inside the container
+WORKDIR /app
+
+# ---- Install Dependencies ----
+# Copy the requirements file in FIRST
+COPY requirements.txt .
+
+# Install all libraries from the requirements file
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ---- Copy Your App ----
+# Copy ALL your project files (app.py, templates folder, etc.)
+# into the /app directory inside the container
+COPY . .
+
+# ---- Run Command ----
+# This is the command that will run when the container starts.
+# It tells Gunicorn to run the 'app' variable from the 'app.py' file.
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5001", "app:app"]

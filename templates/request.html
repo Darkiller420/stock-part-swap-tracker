@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 style="margin-top: 10px;">Log New Stock Swap Request</h2>
+
+    {% if success_message %}
+        <div class="message-box {% if 'Error' in success_message %}error-box{% else %}success-box{% endif %}">
+            {{ success_message|safe }}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        <div style="margin-bottom: 10px;">
+            <label for="udt_ticket_wo">{{ column_map['udt_ticket_wo'] }}</label>
+            <input type="text" id="udt_ticket_wo" name="udt_ticket_wo" value="{{ initial_udt }}" required>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label for="part_abbreviation">{{ column_map['part_abbreviation'] }}</label>
+            <select id="part_abbreviation" name="part_abbreviation" required>
+                <option value="">-- Select Part --</option>
+                {% for part in known_parts %}
+                    <option value="{{ part }}">{{ part }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="serial_num">{{ column_map['serial_num'] }}</label>
+            <input type="text" id="serial_num" name="serial_num" required>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="oem_claim_num">{{ column_map['oem_claim_num'] }} (Optional)</label>
+            <input type="text" id="oem_claim_num" name="oem_claim_num">
+        </div>
+
+        <div>
+            <button type="submit" class="button">Log Request</button>
+        </div>
+    </form>
+{% endblock %}
