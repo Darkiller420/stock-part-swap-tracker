@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2 style="margin-top: 10px;">Completed Swaps (Total: {{ completed_count }})</h2>
+    {# MODIFIED: Use pagination.total for the count #}
+    <h2 style="margin-top: 10px;">Completed Swaps (Total: {{ pagination.total or completed_count }})</h2>
     
     <p style="text-align: right; margin-bottom: 20px; font-style: italic;">
         Average Time to Completion (Dispatch to Receipt): **{{ avg_days_to_complete }} days**
@@ -87,6 +88,41 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {# --- ADDED PAGINATION CONTROLS --- #}
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination" style="margin-top: 20px;">
+        {# Previous Page Link #}
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('completed_swaps', page=pagination.prev_num) }}" class="page-link">&laquo; Previous</a>
+        {% else %}
+            <span class="page-link disabled">&laquo; Previous</span>
+        {% endif %}
+
+        {# Page Number Links #}
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% if page_num %}
+                {% if pagination.page == page_num %}
+                    <span class="page-link current">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('completed_swaps', page=page_num) }}" class="page-link">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="page-link ellipsis">…</span>
+            {% endif %}
+        {% endfor %}
+
+        {# Next Page Link #}
+        {% if pagination.has_next %}
+            <a href="{{ url_for('completed_swaps', page=pagination.next_num) }}" class="page-link">Next &raquo;</a>
+        {% else %}
+            <span class="page-link disabled">Next &raquo;</span>
+        {% endif %}
+        <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} items)</span>
+    </div>
+    {% endif %}
+    {# --- END ADDED BLOCK --- #}
+
     {% else %}
     <p class="message-box success-box">
         No completed swaps found. Time to get swapping!

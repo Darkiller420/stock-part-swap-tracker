@@ -1,32 +1,20 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2 style="margin-top: 10px;">Log New Stock Swap Request</h2>
-
-    {% if success_message %}
-        <div class="message-box {% if 'Error' in success_message %}error-box{% else %}success-box{% endif %}">
-            {{ success_message|safe }}
-        </div>
-    {% endif %}
+    <h2 style="margin-top: 10px;">Log New Stock Swap Request(s)</h2>
 
     <form method="POST">
+        
+        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px;">Shared Details</h3>
+        <p style="font-size: 0.9em; color: #555; margin-top: -10px;">These details will be applied to all parts added below.</p>
+
         <div style="margin-bottom: 10px;">
             <label for="udt_ticket_wo">{{ column_map['udt_ticket_wo'] }}</label>
             <input type="text" id="udt_ticket_wo" name="udt_ticket_wo" value="{{ initial_udt }}" required>
         </div>
-
-        <div style="margin-bottom: 10px;">
-            <label for="part_abbreviation">{{ column_map['part_abbreviation'] }}</label>
-            <select id="part_abbreviation" name="part_abbreviation" required>
-                <option value="">-- Select Part --</option>
-                {% for part in known_parts %}
-                    <option value="{{ part }}">{{ part }}</option>
-                {% endfor %}
-            </select>
-        </div>
         
         <div style="margin-bottom: 10px;">
-            <label for="serial_num">{{ column_map['serial_num'] }}</label>
+            <label for="serial_num">{{ column_map['serial_num'] }} (Shared Serial Number)</label>
             <input type="text" id="serial_num" name="serial_num" required>
         </div>
 
@@ -35,8 +23,90 @@
             <input type="text" id="oem_claim_num" name="oem_claim_num">
         </div>
 
+        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px;">Parts to Request</h3>
+        
+        <div id="part-rows-container">
+            </div>
+
+        <div style="margin-top: 15px; margin-bottom: 25px;">
+            <button type="button" id="add-part-btn" class="secondary-button" style="font-size: 0.9em; padding: 8px 12px;">
+                + Add Another Part
+            </button>
+        </div>
+        
         <div>
-            <button type="submit" class="button">Log Request</button>
+            <button type="submit" class="button">Log Request(s)</button>
         </div>
     </form>
+
+<script>
+    // Pass the part list from Flask to JavaScript
+    const knownParts = {{ known_parts|tojson }};
+    
+    // Get the container
+    const container = document.getElementById('part-rows-container');
+    const addPartBtn = document.getElementById('add-part-btn');
+
+    function createPartRow() {
+        // Create the new row div
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '10px';
+        row.style.marginBottom = '10px';
+        row.style.padding = '10px';
+        row.style.border = '1px solid #eee';
+        row.style.borderRadius = '4px';
+
+        // 1. Create the Select Dropdown
+        const select = document.createElement('select');
+        select.name = 'part_abbreviation[]'; // This makes it part of the list
+        select.required = true;
+        select.style.flex = '1'; // Make it take up most of the space
+        
+        // Add a blank default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '-- Select Part --';
+        select.appendChild(defaultOption);
+
+        // Add all the known parts as options
+        knownParts.forEach(part => {
+            const option = document.createElement('option');
+            option.value = part;
+            option.textContent = part;
+            select.appendChild(option);
+        });
+
+        // 2. Create the Remove Button
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = 'Remove';
+        // Use existing CSS classes for styling
+        removeBtn.classList.add('action-button'); 
+        removeBtn.style.backgroundColor = '#CC0000';
+        removeBtn.style.minWidth = '80px';
+        
+        // Add click event to remove its own parent row
+        removeBtn.onclick = function() {
+            container.removeChild(row);
+        };
+
+        // Add the select and button to the row
+        row.appendChild(select);
+        row.appendChild(removeBtn);
+
+        // Add the new row to the container
+        container.appendChild(row);
+    }
+
+    // Add one row when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        createPartRow();
+    });
+
+    // Add another row when the button is clicked
+    addPartBtn.addEventListener('click', createPartRow);
+
+</script>
 {% endblock %}

@@ -9,7 +9,7 @@
         h1 { color: #333; }
         h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 25px; }
         h3 { border-bottom: 1px solid #ddd; padding-bottom: 3px; margin-top: 15px; }
-        
+
         /* Table Styling */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: white; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.9em; }
@@ -20,53 +20,59 @@
         .status-pending_dispatch { color: #f39c12; font-weight: bold; } /* Orange */
         .status-pending_receipt { color: #008CBA; font-weight: bold; } /* Blue */
         .status-completed { color: #4CAF50; font-weight: bold; } /* Green for completed */
-        
+
         /* Header and Buttons */
-        .app-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            border-bottom: 2px solid #ccc; 
-            padding-bottom: 10px; 
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
         }
         .header-actions {
             display: flex;
             align-items: center;
         }
-        .button { 
-            background-color: #4CAF50; 
-            color: white; 
-            padding: 10px 15px; 
-            text-decoration: none; 
-            border-radius: 5px; 
-            transition: background-color 0.3s; 
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
             font-weight: bold;
             display: inline-block;
+            border: none; /* Ensure buttons don't have borders */
+            cursor: pointer; /* Add pointer cursor */
         }
         .button:hover { background-color: #45a049; }
-        .secondary-button { 
-            background-color: #aaa; 
-            color: white; 
-            padding: 8px 12px; 
-            text-decoration: none; 
-            border-radius: 5px; 
-            transition: background-color 0.3s; 
-            font-size: 0.9em; 
-            margin-left: 10px; 
+        .secondary-button {
+            background-color: #aaa;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+            margin-left: 10px;
             display: inline-block;
+            border: none; /* Ensure buttons don't have borders */
+            cursor: pointer; /* Add pointer cursor */
         }
         .secondary-button:hover { background-color: #999; }
-        .action-button { 
-            color: white; 
-            padding: 6px 12px; 
-            text-decoration: none; 
-            border-radius: 4px; 
-            font-size: 0.9em; 
-            display: inline-block; 
+        .action-button {
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+            display: inline-block;
             min-width: 120px;
             text-align: center;
             transition: opacity 0.3s;
+            border: none; /* Ensure buttons don't have borders */
+            cursor: pointer; /* Add pointer cursor */
         }
         .action-button:hover { opacity: 0.8; }
 
@@ -77,36 +83,36 @@
         .nav-links a:hover { color: #008CBA; }
 
         /* Metrics */
-        .metric-card { 
-            background-color: white; 
-            border: 1px solid #ddd; 
-            padding: 15px; 
-            border-radius: 5px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+        .metric-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             text-align: center;
         }
         .metric-value { font-size: 2em; font-weight: bold; margin-top: 5px; }
-        .metric-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 15px; 
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
             margin-top: 15px;
         }
-        
+
         /* Stock Summary */
-        .stock-summary-container { 
-            margin-top: 30px; 
-            padding: 20px; 
-            background-color: #eef; 
-            border-radius: 8px; 
+        .stock-summary-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #eef;
+            border-radius: 8px;
             border: 1px solid #dde;
         }
-        .stock-item { 
-            background-color: white; 
-            border: 1px solid #ccc; 
-            padding: 10px; 
-            border-radius: 4px; 
-            text-align: center; 
+        .stock-item {
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
             font-size: 0.8em;
         }
         .stock-sku { font-weight: bold; color: #333; margin-bottom: 3px; }
@@ -116,7 +122,7 @@
         /* Form/Input Styling */
         form { background-color: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="number"], select, textarea, input[type="date"] {
+        input[type="text"], input[type="number"], input[type="password"], select, textarea, input[type="date"] {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -130,38 +136,43 @@
             outline: none;
             box-shadow: 0 0 0 1px #008CBA;
         }
+        input[type="checkbox"] { /* Specific style for checkbox */
+             width: auto;
+             margin-bottom: 0;
+             margin-right: 5px;
+             vertical-align: middle;
+        }
         .message-box {
             padding: 15px;
             margin-top: 20px;
             border-radius: 4px;
             font-size: 1em;
-            /* Added margin-bottom to separate from content */
-            margin-bottom: 20px; 
+            margin-bottom: 20px;
         }
-        .success-box {
-            background-color: #e6ffe6; 
+        .success-box { /* Used for success and info */
+            background-color: #e6ffe6;
             border-left: 5px solid #4CAF50;
             color: #006600;
-            font-weight: bold; /* Added bold for visibility */
+            font-weight: bold;
         }
         .error-box {
-            background-color: #ffe6e6; 
+            background-color: #ffe6e6;
             border-left: 5px solid #cc0000;
             color: #cc0000;
-            font-weight: bold; /* Added bold for visibility */
+            font-weight: bold;
         }
-        
+
         /* Footer Styling */
         footer {
-            margin-top: 30px; 
+            margin-top: 30px;
             padding: 15px 0;
             border-top: 1px solid #ddd;
             text-align: center;
             font-size: 0.85em;
             color: #777;
         }
-        
-        /* Footer Link Styling - Modified to fit new footer structure */
+
+        /* Footer Link Styling */
         .footer-content {
              display: flex;
              justify-content: space-between;
@@ -176,40 +187,64 @@
         .footer-link a:hover {
             text-decoration: underline;
         }
+
+        /* Style for user info in header */
+        .user-info {
+            font-size: 0.9em;
+            color: #555;
+            margin-right: 15px; /* Add space before logout link */
+        }
+        .user-info strong {
+            color: #333;
+        }
     </style>
 </head>
 <body>
     <div style="max-width: 1400px; margin: 0 auto;">
-        
+
         <div class="app-header">
             <h1>🛠️ Stock Swap Tracker</h1>
             <div class="header-actions">
-                <a href="{{ url_for('log_request') }}" class="button">➕ Log New Request</a>
-                <a href="{{ url_for('inventory_management') }}" class="secondary-button">Inventory Log</a>
+                {# Keep existing buttons if user is logged in #}
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('log_request') }}" class="button" style="margin-left: 10px;">➕ Log New Request</a>
+                    <a href="{{ url_for('inventory_management') }}" class="secondary-button">Inventory Log</a>
+                {% endif %}
+				<div class="login-button">
+                {% if current_user.is_authenticated %}
+
+                    <a href="{{ url_for('logout') }}" class="secondary-button">{{ current_user.username }}: Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="button">Login</a>
+                {% endif %}
+                </div>   				
             </div>
         </div>
 
+        {# Only show nav links if logged in #}
+        {% if current_user.is_authenticated %}
         <div class="nav-links">
             <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Dashboard</a>
             <a href="{{ url_for('completed_swaps') }}" class="{% if request.endpoint == 'completed_swaps' %}active{% endif %}">Completed Swaps</a>
         </div>
-        
-        {# START OF NEW CODE: FLASH MESSAGES BLOCK #}
+        {% endif %}
+
+        {# Flash messages block (Unchanged - Already present) #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
+                    {# Use success-box for 'info' as well, error-box only for 'error' #}
                     <div class="message-box {% if category == 'error' %}error-box{% else %}success-box{% endif %}">
                         {{ message|safe }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        {# END OF NEW CODE: FLASH MESSAGES BLOCK #}
 
         <div style="padding-top: 20px;">
             {% block content %}{% endblock %}
         </div>
-        
+
     </div>
 
     <footer>
@@ -217,9 +252,12 @@
             <p></p>
             <div class="footer-content">
                 <p>&copy; Send your feedback to Geordany ☻</p>
+                {# Only show export if logged in #}
+                {% if current_user.is_authenticated %}
                 <div class="footer-link">
                     <a href="{{ url_for('export_data') }}">Export All Data</a>
                 </div>
+                {% endif %}
             </div>
         </div>
     </footer>

@@ -1,46 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2 style="margin-top: 10px;">Log Receipt for Stock Swap</h2>
+    <h2 style="margin-top: 10px;">Log Batch Receipt for Job</h2>
 
     <div style="background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px;">
-        <h3 style="margin-top: 0; border-bottom: none; padding-bottom: 0;">Request Details ({{ entry.request_id[:8] }}...)</h3>
-        <p style="margin: 5px 0;"><strong>{{ column_map['udt_ticket_wo'] }}:</strong> {{ entry.udt_ticket_wo }}</p>
-        <p style="margin: 5px 0;"><strong>Part Used:</strong> {{ entry.part_abbreviation }} (SN: {{ entry.serial_num }})</p>
-        <p style="margin: 5px 0;"><strong>Dispatched sku:</strong> {{ entry.stock_part_used_sku }}</p>
+        <h3 style="margin-top: 0; border-bottom: none; padding-bottom: 0;">Shared Job Details</h3>
+        <p style="margin: 5px 0;"><strong>{{ column_map['udt_ticket_wo'] }}:</strong> {{ shared_details.udt_ticket_wo }}</p>
+        <p style="margin: 5px 0;"><strong>{{ column_map['serial_num'] }}:</strong> {{ shared_details.serial_num }}</p>
+        <p style="margin: 5px 0;"><strong>{{ column_map['oem_claim_num'] }}:</strong> {{ shared_details.oem_claim_num or 'N/A' }}</p>
     </div>
 
-    <form method="POST">
-<label for="received_part_sku">Received Part SKU:</label>
-<input type="text" id="received_part_sku" name="received_part_sku" value="{{ entry.received_part_pn or '' }}" required>
-
-        <div style="margin-bottom: 10px;">
-            <label for="received_ppid">{{ column_map['received_ppid'] }} (Received PPID/Serial)</label>
-            <input type="text" id="received_ppid" name="received_ppid" required value="{{ entry.received_ppid or '' }}">
-        </div>
+    <form method="POST" action="{{ url_for('log_receive', request_id=swaps_to_receive[0].request_id) }}">
         
-        <div style="margin-bottom: 10px;">
-            <label for="received_qty">{{ column_map['received_qty'] }}</label>
-            <input type="number" id="received_qty" name="received_qty" required min="1" value="{{ entry.received_qty or 1 }}">
-        </div>
-
-        <div style="margin-bottom: 10px;">
-            <label for="received_bin">{{ column_map['received_bin'] }} (Restock Location)</label>
-            <input type="text" id="received_bin" name="received_bin" required value="{{ entry.received_bin or '' }}">
-        </div>
-
-        <div style="margin-bottom: 20px;">
-            <label for="received_doa">{{ column_map['received_doa'] }}</label>
-            <select id="received_doa" name="received_doa" required>
-                <option value="No" {% if entry.received_doa == 'No' %}selected{% endif %}>No (Part is good, ADD to stock)</option>
-                <option value="Yes" {% if entry.received_doa == 'Yes' %}selected{% endif %}>Yes (Part is DOA, DO NOT add to stock)</option>
-            </select>
-        </div>
+        <p style="font-size: 0.9em; color: #555;">Enter the details for each failed part you are receiving. <strong>Rows with a blank PPID will be skipped</strong> and remain pending.</p>
         
-        <p style="color: #008CBA; font-weight: bold; margin-bottom: 20px;">**Confirming receipt sets the status to **COMPLETED** and updates inventory based on the DOA selection.**</p>
+        {% for swap in swaps_to_receive %}
+        <div class="part-card" style="background: #fff; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            
+            <input type="hidden" name="request_ids[]" value="{{ swap.request_id }}">
+
+            <h4 style="margin-top: 0; color: #008CBA;">Receiving Failed: {{ swap.part_abbreviation }}</h4>
+            <p style="font-size: 0.8em; margin-top: -10px; color: #666;">(Dispatched SKU: {{ swap.stock_part_used_sku }})</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                
+                <div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="received_ppid_{{ swap.request_id }}">{{ column_map['received_ppid'] }} (Received PPID/Serial)</label>
+                        <input type="text" id="received_ppid_{{ swap.request_id }}" name="received_ppid_{{ swap.request_id }}" value="">
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label for="received_part_sku_{{ swap.request_id }}">Received Part SKU</label>
+                        <input type="text" id="received_part_sku_{{ swap.request_id }}" name="received_part_sku_{{ swap.request_id }}" 
+                               value="{{ swap.stock_part_used_sku }}" list="sku-suggestions">
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="received_bin_{{ swap.request_id }}">{{ column_map['received_bin'] }} (Restock Location)</label>
+                        <input type="text" id="received_bin_{{ swap.request_id }}" name="received_bin_{{ swap.request_id }}" 
+                               value="{{ swap.stock_bin }}" list="bin-suggestions">
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label for="received_qty_{{ swap.request_id }}">{{ column_map['received_qty'] }}</label>
+                            <input type="number" id="received_qty_{{ swap.request_id }}" name="received_qty_{{ swap.request_id }}" value="1" min="1">
+                        </div>
+                        <div style="flex: 2;">
+                            <label for="received_doa_{{ swap.request_id }}">{{ column_map['received_doa'] }}</label>
+                            <select id="received_doa_{{ swap.request_id }}" name="received_doa_{{ swap.request_id }}">
+                                <option value="No">No (Add to stock)</option>
+                                <option value="Yes">Yes (Send to RMA/DOA)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <p style="color: #008CBA; font-weight: bold; margin-bottom: 20px;">
+            **Confirming** will complete all parts you filled out and add them to inventory (or RMA).
+        </p>
 
         <div>
-            <button type="submit" class="action-button" style="background-color: #008CBA;">Confirm Receipt & Complete</button>
+            <button type="submit" class="action-button" style="background-color: #008CBA; min-width: 150px;">
+                Confirm Batch Receipt
+            </button>
         </div>
     </form>
+
+    <datalist id="sku-suggestions">
+        {% for sku in all_skus %}
+            <option value="{{ sku }}">
+        {% endfor %}
+    </datalist>
+    
+    <datalist id="bin-suggestions">
+        {% for bin in all_bins %}
+            <option value="{{ bin }}">
+        {% endfor %}
+    </datalist>
 {% endblock %}

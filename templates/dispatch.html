@@ -2,13 +2,79 @@
 
 {% block content %}
     
-    {# CONDITIONAL TITLE #}
+    {% if swaps_to_dispatch %}
     <h2 style="margin-top: 10px;">
-        {% if action == 'edit' %}
-            Edit Dispatched Part for Stock Swap
-        {% else %}
-            Log Dispatch for Stock Swap
-        {% endif %}
+        Log Batch Dispatch for Job
+    </h2>
+
+    <div style="background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; border-bottom: none; padding-bottom: 0;">Shared Job Details</h3>
+        <p style="margin: 5px 0;"><strong>{{ column_map['udt_ticket_wo'] }}:</strong> {{ shared_details.udt_ticket_wo }}</p>
+        <p style="margin: 5px 0;"><strong>{{ column_map['serial_num'] }}:</strong> {{ shared_details.serial_num }}</p>
+        <p style="margin: 5px 0;"><strong>{{ column_map['oem_claim_num'] }}:</strong> {{ shared_details.oem_claim_num or 'N/A' }}</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('log_dispatch', request_id=swaps_to_dispatch[0].request_id) }}">
+        
+        <p style="font-size: 0.9em; color: #555;">Select the stock part to dispatch for each pending request. <strong>Rows left blank will be skipped</strong> and remain pending.</p>
+        
+        <p style="background-color: #eef; padding: 8px; border-radius: 4px; border: 1px solid #dde; font-weight: bold;">
+            Showing available stock for requested part type: <strong style="color: #008CBA;">{{ requested_acronym }}</strong>
+        </p>
+        {% for swap in swaps_to_dispatch %}
+        <div class="part-card" style="background: #fff; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            
+            <input type="hidden" name="request_ids[]" value="{{ swap.request_id }}">
+
+            <h4 style="margin-top: 0; color: #008CBA;">Requesting: {{ swap.part_abbreviation }}</h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                <div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="stock_selection_{{ swap.request_id }}">Select Part from Stock (Filtered by {{ swap.part_abbreviation }})</label>
+                        <select id="stock_selection_{{ swap.request_id }}" name="stock_selection_{{ swap.request_id }}">
+                            <option value="">-- Skip this part for now --</option>
+                            {% for part in available_stock %} {# This list is already filtered by the backend #}
+                                {% if part.acronym == swap.part_abbreviation %} {# Double check filter just in case #}
+                                <option value="{{ part.sku }}|{{ part.bin }}">
+                                    {{ part.acronym }} - {{ part.sku }} (Bin: {{ part.bin }}) - Qty: {{ part.quantity }}
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if not available_stock %}
+                         <p style="color: red; font-size: 0.9em;">No stock found matching '{{ swap.part_abbreviation }}'. Add stock via Inventory Management.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label for="inven_adjust_{{ swap.request_id }}">{{ column_map['inven_adjust'] }} (Notes)</label>
+                        <textarea id="inven_adjust_{{ swap.request_id }}" name="inven_adjust_{{ swap.request_id }}" rows="1" style="font-size: 0.9em;"></textarea>
+                    </div>
+                </div>
+                
+                </div>
+        </div>
+        {% endfor %}
+        
+        <p style="color: #CC0000; font-weight: bold; margin-bottom: 20px;">
+            **Confirming** will dispatch all parts you selected, **remove them from stock**, and set them to **PENDING RECEIPT**.
+        </p>
+
+        <div>
+            <button type="submit" class="action-button" style="background-color: #f39c12; min-width: 150px;"
+                {% if not available_stock %}disabled{% endif %}>
+                Confirm Batch Dispatch
+            </button>
+            {% if not available_stock %}
+                <p style="color: red; font-weight: bold; display: inline-block; margin-left: 10px;">Cannot dispatch: No parts matching '{{ requested_acronym }}' are available in stock.</p>
+            {% endif %}
+        </div>
+    </form>
+    
+    {% elif swap_record and action == 'edit' %}
+    <h2 style="margin-top: 10px;">
+        Edit Dispatched Part
     </h2>
 
     <div style="background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px;">
@@ -16,53 +82,63 @@
         <p style="margin: 5px 0;"><strong>{{ column_map['udt_ticket_wo'] }}:</strong> {{ swap_record.udt_ticket_wo }}</p>
         <p style="margin: 5px 0;"><strong>{{ column_map['part_abbreviation'] }}:</strong> {{ swap_record.part_abbreviation }}</p>
         <p style="margin: 5px 0;"><strong>Original Serial:</strong> {{ swap_record.serial_num }}</p>
+        <p style="margin: 5px 0;"><strong>{{ column_map['oem_claim_num'] }}:</strong> {{ swap_record.oem_claim_num or 'N/A' }}</p>
     </div>
 
-    <form method="POST">
+    <form method="POST" action="{{ url_for('edit_dispatch', request_id=swap_record.request_id) }}">
+        
+        <p style="background-color: #eef; padding: 8px; border-radius: 4px; border: 1px solid #dde; font-weight: bold;">
+            Showing available stock for requested part type: <strong style="color: #008CBA;">{{ requested_acronym }}</strong>
+        </p>
+
         <div style="margin-bottom: 10px;">
-            <label for="stock_part_used_sku">{{ column_map['stock_part_used_sku'] }} (Full sku Dispatched)</label>
-            <input type="text" id="stock_part_used_sku" name="stock_part_used_sku" required value="{{ swap_record.stock_part_used_sku or '' }}">
+            <label for="stock_selection">Select Part from Stock (Filtered by {{ requested_acronym }})</label>
+            <select id="stock_selection" name="stock_selection" required>
+                <option value="">-- Select Available Part --</option>
+                {% for part in available_stock %} {# This list is filtered by backend #}
+                     {% if part.acronym == requested_acronym %} {# Double check filter #}
+                        <option value="{{ part.sku }}|{{ part.bin }}"
+                            {% if part.sku == swap_record.stock_part_used_sku and part.bin == swap_record.stock_bin %}
+                                selected
+                            {% endif %}>
+                            {{ part.acronym }} - {{ part.sku }} (From Bin: {{ part.bin }}) - Qty: {{ part.quantity }}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+             {% if not available_stock %}
+                 <p style="color: red; font-size: 0.9em;">No stock found matching '{{ requested_acronym }}'. Add stock via Inventory Management.</p>
+            {% endif %}
         </div>
 
         <div style="margin-bottom: 10px;">
             <label for="inven_adjust">{{ column_map['inven_adjust'] }} (Dispatch Notes)</label>
             <textarea id="inven_adjust" name="inven_adjust" rows="2">{{ swap_record.inven_adjust or '' }}</textarea>
         </div>
-
+        
         <div style="margin-bottom: 20px;">
-            <label for="stock_bin">{{ column_map['stock_bin'] }} (Bin Location)</label>
-            <input type="text" id="stock_bin" name="stock_bin" required value="{{ swap_record.stock_bin or '' }}">
+            <label for="dispatch_doa">{{ column_map['dispatch_doa'] }} (Set status *after* initial dispatch)</label>
+            <select id="dispatch_doa" name="dispatch_doa">
+                <option value="No" {% if swap_record.dispatch_doa == 'No' %}selected{% endif %}>No (Part is Good)</option>
+                <option value="Yes" {% if 'Yes' in swap_record.dispatch_doa %}selected{% endif %}>Yes (Part is DOA)</option> </select>
         </div>
         
         <p style="color: #CC0000; font-weight: bold; margin-bottom: 20px;">
-            {% if action == 'edit' %}
-                **Updating** this dispatch will reverse the original stock log entry and log a new one. The request remains **PENDING RECEIPT**.
-            {% else %}
-                **Confirming** this dispatch marks the part as removed from stock and sets the request to **PENDING RECEIPT**.
-            {% endif %}
+            **Updating** this dispatch will reverse/apply inventory changes based on the DOA status. The request remains **PENDING RECEIPT**.
         </p>
 
         <div style="display: flex; align-items: center;">
-            
-            {# SUBMIT BUTTON: Conditional text and color #}
-            <button type="submit" class="action-button" style="background-color: {% if action == 'edit' %}#663399{% else %}#f39c12{% endif %}; min-width: 150px;">
-                {% if action == 'edit' %}
-                    Update Dispatch
-                {% else %}
-                    Confirm Dispatch
-                {% endif %}
+            <button type="submit" class="action-button" style="background-color: #663399; min-width: 150px;"
+                 {% if not available_stock %}disabled{% endif %}>
+                Update Dispatch
             </button>
-            
-            {# CANCEL REQUEST BUTTON (Only for PENDING_RECEIPT / Edit Mode) #}
-            {% if action == 'edit' %}
-                <a href="{{ url_for('cancel_request', request_id=swap_record.request_id) }}" 
-                   class="action-button" 
-                   style="background-color: #CC0000; margin-left: 10px; min-width: 150px;"
-                   onclick="return confirm('WARNING: Are you sure you want to CANCEL this PENDING RECEIPT request? This action will revert the dispatched part back into usable stock and delete the request permanently.');">
-                    Cancel Request
-                </a>
-            {% endif %} 
-            
+            <a href="{{ url_for('cancel_request', request_id=swap_record.request_id) }}" 
+               class="action-button" 
+               style="background-color: #CC0000; margin-left: 10px; min-width: 150px;"
+               onclick="return confirm('WARNING: Are you sure you want to CANCEL this PENDING RECEIPT request? This will revert the dispatched part back into usable stock and delete the request permanently.');">
+                Cancel Request
+            </a>
         </div>
     </form>
+    {% endif %}
 {% endblock %}

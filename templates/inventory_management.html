@@ -4,7 +4,7 @@
     <h2 style="margin-top: 10px;">Inventory Management</h2>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        
+
         <div>
             <h3>Current Calculated Stock (Generic)</h3>
             <div style="background-color: white; padding: 15px; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -13,7 +13,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="background-color: #777;">Part Number</th>
+                                    <th style="background-color: #777;">Part</th>
                                     <th style="background-color: #777;">Quantity</th>
                                 </tr>
                             </thead>
@@ -35,52 +35,30 @@
 
         <div>
             <h3>Log Manual Stock Adjustment</h3>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="message-box {% if category == 'error' %}error-box{% else %}success-box{% endif %}">
-                            {{ message|safe }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
             <form method="POST">
-                
-                {# 🚀 NEW PART ACRONYM FIELD ADDED HERE #}
+
                 <div style="margin-bottom: 10px;">
                     <label for="part_acronym">Part Acronym</label>
-                    <select id="part_acronym" name="part_acronym" required>
-                        <option value="">-- Select Part --</option>
-                        {% for part in known_parts %}
-                            <option value="{{ part }}">{{ part }}</option>
-                        {% endfor %}
-                    </select>
-                    <p style="font-size: 0.8em; color: #666; margin-top: 5px;">Select the generic part stock to adjust.</p>
+                    <input type="text" id="part_acronym" name="part_acronym" required list="acronym-suggestions" placeholder="Selecciona o Crea uno nuevo!!">
+                    <p style="font-size: 0.8em; color: #666; margin-top: 5px;">Select or type a new one. Sin errores verifica!! </p>
                 </div>
-                {# END NEW FIELD #}
 
                 <div style="margin-bottom: 10px;">
                     <label for="part_sku">{{ column_map['part_sku'] }} (Full SKU)</label>
                     <input type="text" id="part_sku" name="part_sku" required list="sku-suggestions">
-                    <datalist id="sku-suggestions">
-                        {% for sku in all_skus %}
-                            <option value="{{ sku }}">
-                        {% endfor %}
-                    </datalist>
-                    <p style="font-size: 0.8em; color: #666; margin-top: -5px;">Example: A01-1234567.</p>
+                    <p style="font-size: 0.8em; color: #666; margin-top: -5px;">.</p>
                 </div>
 
                 <div style="margin-bottom: 10px;">
                     <label for="bin">Bin Location</label>
-                    <input type="text" id="bin" name="bin" required placeholder="e.g., A1-SHELF, QC-HOLD">
-                    <p style="font-size: 0.8em; color: #666; margin-top: -5px;">Where the part is physically going.</p>
+                    <input type="text" id="bin" name="bin" required placeholder="Where the part is physically going." list="bin-suggestions">
                 </div>
 
                 <div style="margin-bottom: 10px;">
                     <label for="quantity">{{ column_map['quantity'] }} (+ or -)</label>
-                    <input type="number" id="quantity" name="quantity" required placeholder="e.g., 5 for addition, -3 for removal">
+                    <input type="number" id="quantity" name="quantity" required placeholder="Use negative for removal -1">
                 </div>
-                
+
                 <div style="margin-bottom: 20px;">
                     <label for="notes">{{ column_map['notes'] }}</label>
                     <textarea id="notes" name="notes" rows="2" required></textarea>
@@ -92,10 +70,10 @@
             </form>
         </div>
     </div>
-    
+
     <hr style="margin: 30px 0;">
 
-    {# --- NEW SECTION: DETAILED STOCK BY BIN --- #}
+    {# --- DETAILED STOCK BY BIN --- #}
     <h3 style="margin-top: 30px;">Detailed Stock by Bin Location</h3>
     {% if stock_detail %}
     <div style="overflow-x: auto; border: 1px solid #ddd; margin-bottom: 30px;">
@@ -125,10 +103,9 @@
         No detailed stock records found (Stock level is zero or less in all bins).
     </p>
     {% endif %}
-    {# --- END NEW SECTION --- #}
 
     <h2 style="margin-top: 30px;">Inventory Adjustment Log History</h2>
-    
+
     {% if log_entries %}
     <div style="overflow-x: auto; border: 1px solid #ddd;">
         <table style="min-width: 800px;">
@@ -136,7 +113,7 @@
                 <tr>
                     <th>Log ID</th>
                     <th>Date</th>
-                    <th>Part Acronym</th> {# NEW COLUMN HEADER #}
+                    <th>Part Acronym</th>
                     <th>{{ column_map['part_sku'] }}</th>
                     <th>Bin/Location</th>
                     <th>Change</th>
@@ -147,8 +124,9 @@
                 {% for entry in log_entries %}
                 <tr>
                     <td>{{ entry.inventory_id[:8] }}...</td>
-                    <td>{{ entry.inventory_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>{{ entry.part_acronym or '-' }}</td> {# NEW COLUMN VALUE #}
+                    {# Corrected date formatting check #}
+                    <td>{{ entry.inventory_date.strftime('%Y-%m-%d %H:%M') if entry.inventory_date and entry.inventory_date is not string else entry.inventory_date or '-' }}</td>
+                    <td>{{ entry.part_acronym or '-' }}</td>
                     <td>{{ entry.part_sku }}</td>
                     <td>{{ entry.bin if entry.bin else 'N/A' }}</td>
                     <td style="font-weight: bold; color: {% if entry.quantity|int > 0 %}#4CAF50{% else %}#CC0000{% endif %};">
@@ -160,9 +138,93 @@
             </tbody>
         </table>
     </div>
+
+    {% if log_pagination %} {# Check if pagination object exists #}
+    <div class="pagination">
+        {# Previous Page Link #}
+        {% if log_pagination.has_prev %}
+            <a href="{{ url_for('inventory_management', log_page=log_pagination.prev_num) }}" class="page-link">&laquo; Previous Log Page</a>
+        {% else %}
+            <span class="page-link disabled">&laquo; Previous Log Page</span>
+        {% endif %}
+
+        {# Page Number Links #}
+        {% for page_num in log_pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% if page_num %}
+                {% if log_pagination.page == page_num %}
+                    <span class="page-link current">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('inventory_management', log_page=page_num) }}" class="page-link">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="page-link ellipsis">…</span>
+            {% endif %}
+        {% endfor %}
+
+        {# Next Page Link #}
+        {% if log_pagination.has_next %}
+            <a href="{{ url_for('inventory_management', log_page=log_pagination.next_num) }}" class="page-link">Next Log Page &raquo;</a>
+        {% else %}
+            <span class="page-link disabled">Next Log Page &raquo;</span>
+        {% endif %}
+         <span class="page-info">Log Page {{ log_pagination.page }} of {{ log_pagination.pages }} ({{ log_pagination.total }} entries)</span>
+    </div>
+    {% endif %}
     {% else %}
     <p class="message-box" style="margin-top: 15px; background-color: #f0f0f0; border-left: 5px solid #aaa;">
-        No manual adjustments logged yet.
+        No inventory log entries found yet.
     </p>
     {% endif %}
+
+    <datalist id="acronym-suggestions">
+        {% for part in known_parts %}
+           <option value="{{ part }}">
+       {% endfor %}
+    </datalist>
+
+    <datalist id="sku-suggestions">
+        </datalist>
+
+    <datalist id="bin-suggestions">
+        {% for bin in all_bins %}
+            <option value="{{ bin }}">
+        {% endfor %}
+    </datalist>
+
+<script>
+    // Pass the map from Flask to JavaScript
+    const acronymSkuMap = {{ acronym_sku_map|tojson }};
+
+    // Get references to the elements
+    const acronymSelect = document.getElementById('part_acronym'); // Changed back to Select for consistency with provided code, though input is better for adding new
+    const skuDatalist = document.getElementById('sku-suggestions');
+    const skuInput = document.getElementById('part_sku'); // Get the input field too
+
+    // Function to update the SKU datalist
+    function updateSkuSuggestions() {
+        const selectedAcronym = acronymSelect.value; // Read value from input/select
+        const skus = acronymSkuMap[selectedAcronym] || []; // Get SKUs or empty list
+
+        // Clear existing options
+        skuDatalist.innerHTML = '';
+
+        // Add new options based on the selected acronym
+        skus.forEach(sku => {
+            const option = document.createElement('option');
+            option.value = sku;
+            skuDatalist.appendChild(option);
+        });
+
+        // Optional: Clear the SKU input field when acronym changes
+        // skuInput.value = '';
+    }
+
+    // Add event listener to the acronym input/select
+    acronymSelect.addEventListener('change', updateSkuSuggestions); // Use 'change' or 'input' depending on element type
+    acronymSelect.addEventListener('input', updateSkuSuggestions); // Added input listener too for text input case
+
+    // Optional: Call once on page load if you want to initialize based on a default acronym (if any)
+    // document.addEventListener('DOMContentLoaded', updateSkuSuggestions);
+
+</script>
 {% endblock %}
